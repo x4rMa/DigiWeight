@@ -1,0 +1,39 @@
+import serial
+
+# Debug mode
+DEBUG = True
+
+# GUI settings
+SW_INFO = "DigiWeight - v1.0"
+SW_CREDITS = "Copyright (c) 2013 Fabio Natali\nhttp://fnstudio.it/"
+MAIN_WINDOW_TITLE = "DigiWeight"
+PRINT_POPUP_TITLE = "Print dialog"
+ERROR_POPUP_TITLE = "Error"
+INFO_POPUP_TITLE = "Statistics and credits"
+
+# Database settings
+DB_DRIVER_WINDOWS = "SQL Server"
+DB_DRIVER_UNIX = "FreeTDS"
+DB_SERVER = ""
+DB_DATABASE = ""
+DB_DSN = ""
+DB_USERNAME = ""
+DB_PASSWORD = ""
+DB_TABLE = ""
+DB_FIELDS = ""
+DB_STATS_TABLE = ""
+
+# Serial device settings
+SERIAL_PORT = "COM1"
+SERIAL_BAUDRATE = 4800
+SERIAL_PARITY = serial.PARITY_EVEN
+SERIAL_STOPBITS = serial.STOPBITS_TWO
+SERIAL_BYTESIZE = serial.SEVENBITS
+WEIGHT_ERROR_MESSAGE = "Error"
+
+# Label printing settings
+RST2PDF_CMD = "rst2pdf"
+RST2PDF_TEMPLATE = "template.rst"
+RST2PDF_CONF = "rst2pdf.conf"
+RST2PDF_RST = "input.rst"
+RST2PDF_PDF = "output.pdf"

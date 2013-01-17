@@ -1,0 +1,21 @@
+.. header::
+
+  .. class:: normal
+
+  | **Company name Ltd**
+  | Company address, 100 - 012345 London UK
+
+.. code-block:: content
+
+    {{ product }}
+
+    Weight: {{ weight }}
+    Date: {{ date }}
+
+.. footer::
+
+  .. class:: normal
+
+  | Use within 3 days.
+  | Ingredients: some love.
+

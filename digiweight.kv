@@ -1,0 +1,139 @@
+#:kivy 1.4
+#:import textwrap textwrap
+#:import settings settings
+
+
+<Button>:
+    background_normal: ""
+    background_color: (.6, .6, .6, 1)
+
+
+<DigiWeightRoot>:
+    title: settings.MAIN_WINDOW_TITLE
+    cols: 1
+    container: container
+    canvas:
+        Color:
+            rgba: .5, .5, .5, 1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+    GridLayout:
+        cols: 2
+        size_hint: 1, .1
+
+        Button:
+            size_hint_x: .8
+            text_size: self.width - 20, None
+            text: settings.SW_INFO
+            color: (1, 1, 1, 1)
+            background_down: ""
+            background_color: (.2, .2, .2, 1)
+
+        Button:
+            size_hint_x: .2
+            text: "Info"
+            on_press: root.open_info_popup()
+            background_down: ""
+            background_color: (.2, .2, .2, 1)
+
+    Widget:
+        size_hint: 1, None
+        height: "3dp"
+        canvas:
+            Color: 
+                rgba: 47 / 255., 167 / 255., 212 / 255., 1.
+            Rectangle:
+                pos: self.pos[0], self.pos[1]
+                size: self.width, 3
+
+    ScrollView:
+        do_scroll_x: False
+ 
+        GridLayout:
+            cols: 10
+            id: container
+            size_hint_y: None
+            height: self.minimum_height
+            spacing: 1
+
+
+<GridButton>:
+    size_hint_y: None
+    height: 50 # WARNING: Use percentage instead of absolute value here!
+    text: "%s" % textwrap.fill(root.item.slug(), 18)
+    halign: "center"
+    font_size: '12sp'
+
+
+<PrintPopup>:
+    title: settings.PRINT_POPUP_TITLE
+    size_hint: 0.5, 0.5
+    
+    GridLayout:
+        cols: 1
+
+        Label:
+            text: "%s\nWeight: %.0f g\nDate: %s" % (root.item.slug(), root.weight, root.date)
+            line_height: 1.5
+            halign: "center"
+
+        BoxLayout:
+            orientation: "horizontal"
+            size_hint: 1.0, 0.2
+            spacing: 1
+            padding: 1
+        
+            Button:
+                text: "Print"
+                on_press: root.print_and_close()
+            Button:
+                text: "Cancel"
+                on_press: root.dismiss()
+
+
+<ErrorPopup>:
+    title: settings.ERROR_POPUP_TITLE
+    size_hint: 0.5, 0.5
+    
+    GridLayout:
+        cols: 1
+
+        Label:
+            text: "Error!\n%s" % root.error
+            line_height: 1.5
+            halign: "center"
+
+        BoxLayout:
+            orientation: "horizontal"
+            size_hint: 1.0, 0.2
+            spacing: 1
+            padding: 1
+        
+            Button:
+                text: "Ok"
+                on_press: root.dismiss()
+
+
+<InfoPopup>:
+    title: settings.INFO_POPUP_TITLE
+    size_hint: 0.5, 0.5
+    
+    GridLayout:
+        cols: 1
+
+        Label:
+            text: "Daily weight: %.0f g\nDaily counter: %s\n\n%s\n%s" % (root.daily_weight, root.daily_counter, settings.SW_INFO, settings.SW_CREDITS)
+            line_height: 1.5
+            halign: "center"
+
+        BoxLayout:
+            orientation: "horizontal"
+            size_hint: 1.0, 0.2
+            spacing: 1
+            padding: 1
+        
+            Button:
+                text: "Ok"
+                on_press: root.dismiss()
