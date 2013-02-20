@@ -5,7 +5,7 @@
 
 <Button>:
     background_normal: ""
-    background_color: (.6, .6, .6, 1)
+    background_color: (.4, .4, .4, 1)
 
 
 <DigiWeightRoot>:
@@ -14,7 +14,7 @@
     container: container
     canvas:
         Color:
-            rgba: .5, .5, .5, 1
+            rgba: .6, .6, .6, 1
         Rectangle:
             pos: self.pos
             size: self.size
@@ -52,7 +52,7 @@
         do_scroll_x: False
  
         GridLayout:
-            cols: 10
+            cols: 8
             id: container
             size_hint_y: None
             height: self.minimum_height
@@ -61,10 +61,10 @@
 
 <GridButton>:
     size_hint_y: None
-    height: 50 # WARNING: Use percentage instead of absolute value here!
+    height: 100 # WARNING: Use percentage instead of absolute value here!
     text: "%s" % textwrap.fill(root.item.slug(), 18)
     halign: "center"
-    font_size: '12sp'
+    font_size: '14sp'
 
 
 <PrintPopup>:
@@ -86,10 +86,7 @@
             padding: 1
         
             Button:
-                text: "Print"
-                on_press: root.print_and_close()
-            Button:
-                text: "Cancel"
+                text: "Exit"
                 on_press: root.dismiss()
 
 
@@ -124,7 +121,7 @@
         cols: 1
 
         Label:
-            text: "Daily weight: %.0f g\nDaily counter: %s\n\n%s\n%s" % (root.daily_weight, root.daily_counter, settings.SW_INFO, settings.SW_CREDITS)
+            text: "%s\n%s" % (settings.SW_INFO, settings.SW_CREDITS)
             line_height: 1.5
             halign: "center"
 

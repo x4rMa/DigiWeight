@@ -7,7 +7,7 @@ import settings
 
 
 # A useful namedtuple to handle database items
-DbTuple = namedtuple('DbTuple', ['code', 'description'], verbose=True)
+DbTuple = namedtuple('DbTuple', ['id', 'description'], verbose=True)
 
 class DbClass(DbTuple):
     """
@@ -38,7 +38,7 @@ else:
     db_connection = pyodbc.connect(
         'DRIVER=%s;SERVER=%s;DATABASE=%s;UID=%s;PWD=%s' % (
             settings.DB_DRIVER_WINDOWS,
-            settings.DB_SERVER,
+            settings.DB_SERVER_IP,
             settings.DB_DATABASE,
             settings.DB_USERNAME,
             settings.DB_PASSWORD
@@ -46,7 +46,7 @@ else:
         )
 cursor = db_connection.cursor().execute(
     "select %s from %s" % (
-        settings.DB_FIELDS,
+        settings.DB_TABLE_FIELDS,
         settings.DB_TABLE
         )
     )
@@ -54,62 +54,54 @@ cursor = db_connection.cursor().execute(
 # Store database items in a list
 item_list = [DbClass(i[0], i[1]) for i in cursor]
 
-
-def get_daily_stats(date):
-    """Look up into the database and retrieve daily statistics.
-    
-    Retrieved statistics are weight and counter summaries which are
-    calculated and saved to the database on a daily basis."""
-
-    # Look up into the database for current values
-    cursor = db_connection.cursor().execute(
-        "select counter, weight, date from %s where date='%s'" % (
-            settings.DB_STATS_TABLE,
-            date
-            )
-        ).fetchall()
-    # Are there any data available for current date?
-    cursor_length = len(cursor)
-    if cursor_length == 0: # No, there are not
-        current_counter = 0
-        current_weight = 0
-    elif cursor_length == 1: # Yes, there is 1 match
-        current_counter = cursor[0][0]
-        current_weight = cursor[0][1]
-    else: # There are too many matches!
-        raise Exception("Date column must be unique in database stats table")
-    
-    try:
-        current_weight = float(current_weight)
-    except ValueError:
-        current_weight = 0
-
-    return {
-        'counter': current_counter,
-        'weight': current_weight,
-        }
-
-
-def set_daily_stats(date, weight):
-    """Save daily statistics to the database.
-
-    Retrieved statistics are weight and counter summaries which are
-    calculated and saved to the database on a daily basis."""
-
-    # Look up into the database for current values
-    stats = get_daily_stats(date)
-
-    # New values
-    new_weight = stats['weight'] + weight
-    new_counter = stats['counter'] + 1
-    
-    # Update the database
-    cursor = db_connection.cursor().execute(
-        "UPDATE %s SET counter=%s, weight=%s, date='%s'" % (
-            settings.DB_STATS_TABLE,
-            new_counter,
-            new_weight,
-            date
-            )
+# Create statistics table if missing
+cursor = db_connection.cursor().execute(
+"""
+IF NOT EXISTS (
+  SELECT * FROM sysobjects WHERE id = object_id(N'%s')
+  AND OBJECTPROPERTY(id, N'IsUserTable') = 1
+)
+CREATE TABLE %s (
+  item_id uniqueidentifier NOT NULL,
+  date date NOT NULL,
+  counter int NOT NULL,
+  weight int NOT NULL,
+  CONSTRAINT pk PRIMARY KEY (item_id, date),
+  FOREIGN KEY (item_id) REFERENCES %s(%s)
+);
+""" % (
+        settings.DB_STATS_TABLE,
+        settings.DB_STATS_TABLE,
+        settings.DB_TABLE,
+        settings.DB_TABLE_PK
         )
+)
+db_connection.commit()
+
+def update_stats(item_id, date, weight):
+    """Update daily statistics on the database.
+
+    Statistics are weight and counter summaries which are calculated
+    and saved to the database for each item on a daily basis.
+
+    Input date format is ``'%d-%m-%Y'`` and must be changed to
+    ``'%d-%m-%Y'`` before database insert/update.
+    """
+
+    # Format date to fit database
+    date = datetime.datetime.strptime(date, '%d-%m-%Y').date()
+    date = date.strftime('%Y-%m-%d')
+
+    # Insert new values or update old ones
+    cursor = db_connection.cursor().execute(
+"""
+update %s set counter=counter+1, weight=weight+? where item_id=? and date=?
+if (@@rowcount = 0)
+begin
+    insert into %s (counter, weight, item_id, date) values (1, ?, ?, ?)
+end
+""" % (settings.DB_STATS_TABLE, settings.DB_STATS_TABLE),
+(weight, item_id, date,
+ weight, item_id, date,)
+)
     db_connection.commit()

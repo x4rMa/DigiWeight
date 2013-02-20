@@ -6,26 +6,22 @@ import settings
 
 
 # Connect to the serial port
-if settings.DEBUG:
-    serial_connection = None
-else:
-    serial_connection = serial.Serial(
-        port = settings.SERIAL_PORT,
-        baudrate = settings.SERIAL_BAUDRATE,
-        parity = settings.SERIAL_PARITY,
-        stopbits = settings.SERIAL_STOPBITS,
-        bytesize = settings.SERIAL_BYTESIZE,
-        timeout = 1
-        )
+serial_connection = serial.Serial(
+    port = settings.SERIAL_PORT,
+    baudrate = settings.SERIAL_BAUDRATE,
+    parity = settings.SERIAL_PARITY,
+    stopbits = settings.SERIAL_STOPBITS,
+    bytesize = settings.SERIAL_BYTESIZE,
+    timeout = 1
+    )
 
+def read_weight():
+    """Read weight from serial device.
 
-def is_valid_line(string):
-    """Parse and validate a line from serial device.
-
-    A valid line must be 30 chars long and is supposed to have this
-    structure:
+    Read a line from serial connection and make sure it complies with
+    this structure:
     
-    $   +0.123     +0.123   kg 0210\r\n
+     $    +0.123      +0.123   kg   0210 r n
     |-|---------|-|---------|-|--|-|----|-|-|
 
      ^ leading $
@@ -39,61 +35,37 @@ def is_valid_line(string):
                                          ^ \r
                                            ^ \n
 
-    Return the weight in grams or false if something goes wrong.
+    Return the weight in grams, tell if it is a significant (over
+    threshold) value and if it has been stable for a while.
     """
-
-    if len(string) != 30:
-        return False
-
-    first_char = string[0]
-    weight = string[1:10]
-    unit = string[21:23]
-    status = string[24:28]
-    last_char = string[29]
-
-    if first_char != '$':
-        return False
-
-    weight = weight.strip()
-    weight = weight.replace(',', '.')
-    try:
-        weight = float(weight)
-    except ValueError:
-        return False
-
-    unit = unit.strip()
-    if unit != 'kg':
-        return False
-
-    if status[0] == '9':
-        return False
-    if status[1] != '2':
-        return False
-    if last_char != '\n':
-        return False
-
-    # weight must be converted from kilo to gram
-    weight *= 1000
-
-    return weight
-
-
-def read_weight():
-    """Read weight from serial device. Output in grams."""
-
-    if settings.DEBUG:
-        return 0
 
     # Clean serial device input
     serial_connection.flushInput()
-	
-    # Listen to serial port until timeout is reached
-    start_time = time.clock()
-    timeout = 1
-    while time.clock() - start_time < timeout:
-        line = serial_connection.readline()
-        weight = is_valid_line(line)
-        if weight:
-            break
-    
-    return weight
+
+    # Read a line from serial connection
+    line = serial_connection.readline()
+
+    first_char = line[0]
+    weight = line[1:10]
+    unit = line[21:23]
+    status = line[24:28]
+    last_char = line[29]
+
+    if first_char != '$' or unit != 'kg' or last_char != '\n':
+        raise ValueError
+
+    weight = weight.strip()
+    weight = weight.replace(',', '.')
+    weight = float(weight)
+    # Convert kilograms to grams
+    weight *= 1000
+
+    is_stable_over_threshold = False
+    is_stable_under_threshold = False
+    if status[1] == '2':
+        if status[0] == '0':
+            is_stable_over_threshold = True
+        else:
+            is_stable_under_threshold = True
+
+    return weight, is_stable_over_threshold, is_stable_under_threshold
