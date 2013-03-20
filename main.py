@@ -87,9 +87,16 @@ class PrintPopup(Popup):
                 'date': self.date
                 }
             self.is_ready_to_print = False
-            print "Print label for product: %s with weight: %s" % (
-                data['product'], data['weight']
-                )
+            # Microsoft Windows console can only display 256 chars and
+            # will raise a ``UnicodeEncodeError`` exception for
+            # certain product names. See
+            # http://wiki.python.org/moin/PrintFails for details.
+            try:
+                print "Print label for product: %s with weight: %s" % (
+                    data['product'], data['weight']
+                    )
+            except UnicodeEncodeError:
+                print "Print label with weight: %s" % data['weight']
             print_label(data)
             update_stats(self.item.id, self.date, self.weight)
 
